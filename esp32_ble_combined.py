@@ -14,8 +14,8 @@ import uos
 # ─── PIN & AUDIO CONFIG ──────────────────────────────────────────────────────
 BTN_PIN     = 0
 LED_PIN     = 2
-MIC_SCK_PIN = 32
-MIC_WS_PIN  = 33
+MIC_SCK_PIN = 14
+MIC_WS_PIN  = 15
 MIC_SD_PIN  = 34
 SPK_SCK_PIN = 26
 SPK_WS_PIN  = 25
