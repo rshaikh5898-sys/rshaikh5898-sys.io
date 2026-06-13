@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyBuddy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/studybuddy.css">
+<style>
+  /* ── LAYOUT ── */
+  .app-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+    z-index: 50;
+  }
+
+  .logo-area {
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent-gradient);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+  }
+
+  .logo-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse-red 2s infinite; /* using pulse-red keyframes but for green */
+    margin-left: auto;
+  }
+  @keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+  .status-dot { animation: pulse-green 2s infinite; }
+
+  .nav-section {
+    padding: 16px 12px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin: 16px 8px 8px;
+  }
+
+  .nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    text-align: left;
+    margin-bottom: 4px;
+  }
+
+  .nav-item:hover {
+    background: var(--surface2);
+    color: var(--text-primary);
+  }
+
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba(108, 99, 255, 0.15), transparent);
+    color: var(--accent-start);
+    border-left: 3px solid var(--accent-start);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+
+  .user-profile {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .avatar {
+    width: 36px; height: 36px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600;
+  }
+
+  .user-details { flex: 1; overflow: hidden; }
+  .user-name { font-size: 14px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+  .user-role { font-size: 12px; color: var(--text-secondary); }
+
+  /* ── MAIN CONTENT ── */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--bg);
+  }
+
+  .topbar {
+    height: 64px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(18, 18, 26, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+  [data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.8); }
+
+  .topbar-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .model-badge {
+    background: rgba(108, 99, 255, 0.1);
+    color: var(--accent-start);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(108, 99, 255, 0.2);
+  }
+
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-md);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background: var(--surface2); color: var(--text-primary); }
+
+  /* ── CHAT AREA ── */
+  .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    scroll-behavior: smooth;
+  }
+
+  .welcome-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    animation: slideUpFade 0.5s ease;
+  }
+
+  @keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .welcome-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 20px rgba(108, 99, 255, 0.3));
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    max-width: 600px;
+    margin-top: 32px;
+  }
+
+  .suggestion-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .suggestion-chip:hover {
+    transform: translateY(-2px);
+    color: var(--text-primary);
+    border-color: var(--accent-mid);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .message {
+    display: flex;
+    gap: 16px;
+    max-width: 85%;
+    animation: slideUpFade 0.3s ease;
+  }
+
+  .message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .message.ai {
+    align-self: flex-start;
+  }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .message.user .msg-avatar { background: var(--surface2); border: 1px solid var(--border); }
+  .message.ai .msg-avatar { background: var(--accent-gradient); color: white; box-shadow: 0 4px 10px rgba(108, 99, 255, 0.3); }
+
+  .msg-bubble {
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    font-size: 15px;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  .message.user .msg-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top-right-radius: 4px;
+  }
+
+  .message.ai .msg-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+  }
+
+  /* Markdown styling inside bubble */
+  .msg-bubble pre {
+    background: #0d1117;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin: 12px 0;
+    border: 1px solid var(--border);
+  }
+  [data-theme="light"] .msg-bubble pre { background: #f1f5f9; }
+
+  /* ── INPUT BAR ── */
+  .input-container {
+    padding: 0 24px 24px;
+    background: transparent;
+  }
+
+  .input-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 8px 8px 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: border-color 0.3s;
+  }
+  .input-box:focus-within { border-color: var(--accent-mid); }
+
+  .input-box textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 15px;
+    resize: none;
+    outline: none;
+    max-height: 120px;
+    padding: 12px 0;
+    font-family: inherit;
+    line-height: 1.5;
+  }
+
+  .mic-btn {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-full);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+  .mic-btn:hover { color: var(--text-primary); background: var(--surface2); }
+  .mic-btn.recording {
+    color: var(--error);
+    animation: pulse-red 1.5s infinite;
+  }
+
+  .send-btn {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.5;
+    pointer-events: none;
+    transition: all 0.2s;
+  }
+  .send-btn.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .send-btn.active:hover {
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .input-footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 12px;
+  }
+
+  /* Responsive */
+  .mobile-nav-toggle { display: none; }
+  @media (max-width: 768px) {
+    .sidebar { position: fixed; transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .mobile-nav-toggle { display: block; }
+    .input-container { padding: 0 16px 16px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-area">
+      <div class="logo-icon">🎓</div>
+      <div class="logo-text">StudyBuddy</div>
+      <div class="status-dot" title="AI Online"></div>
+    </div>
+    
+    <div style="padding: 16px 12px 0;">
+      <button class="btn-primary" style="width: 100%; text-align: left; padding: 10px 16px;" onclick="newChat()">
+        <span style="margin-right: 8px;">+</span> New Conversation
+      </button>
+    </div>
+
+    <div class="nav-section">
+      <div class="section-title">Topics</div>
+      <button class="nav-item active" onclick="setTopic(this, '')">💬 General Chat</button>
+      <button class="nav-item" onclick="setTopic(this, 'Mathematics')">📐 Mathematics</button>
+      <button class="nav-item" onclick="setTopic(this, 'Science')">🔬 Science</button>
+      <button class="nav-item" onclick="setTopic(this, 'History')">📜 History</button>
+      <button class="nav-item" onclick="setTopic(this, 'Coding')">💻 Coding</button>
+      
+      <div id="adminMenu" style="display: none;">
+        <div class="section-title" style="margin-top: 24px;">Admin Tools</div>
+        <button class="nav-item" onclick="openModal('adminStudentsModal')">👥 Manage Students</button>
+        <button class="nav-item" onclick="openModal('adminDeviceModal')">📡 ESP32 Status</button>
+        <button class="nav-item" onclick="openModal('adminWifiModal')">📶 ESP32 WiFi</button>
+      </div>
+    </div>
+
+    <div class="user-profile">
+      <div class="avatar" id="avatarEl">U</div>
+      <div class="user-details">
+        <div class="user-name">{{ name }}</div>
+        <div class="user-role" id="roleEl">Student</div>
+      </div>
+      <a href="/logout" class="icon-btn" style="border:none; width:28px; height:28px;" title="Logout">🚪</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="icon-btn mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <div class="topbar-title" id="topbarTitle">General Chat</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="model-badge">⚡ LLaMA 3.1</div>
+        <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle Theme">🌓</button>
+      </div>
+    </header>
+
+    <div class="chat-container" id="chatBox">
+      <div class="welcome-state" id="welcomeState">
+        <div class="welcome-icon">✨</div>
+        <h2 style="font-family: 'Plus Jakarta Sans'; font-size: 24px; margin-bottom: 8px;">Hi {{ name }}! Ready to study?</h2>
+        <p style="color: var(--text-secondary); font-size: 15px;">Ask me anything about your subjects, or try a suggestion below.</p>
+        
+        <div class="suggestions">
+          <button class="suggestion-chip" onclick="sendText('Explain quantum physics simply')">Explain quantum physics simply</button>
+          <button class="suggestion-chip" onclick="sendText('Help me practice Spanish')">Help me practice Spanish</button>
+          <button class="suggestion-chip" onclick="sendText('How does photosynthesis work?')">How does photosynthesis work?</button>
+          <button class="suggestion-chip" onclick="sendText('Write a Python script to sort an array')">Write a Python script to sort</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-container">
+      <div class="input-box">
+        <button class="icon-btn" style="border:none; width:24px; height:24px;">📎</button>
+        <textarea id="msgInput" rows="1" placeholder="Ask anything..." oninput="checkInput()" onkeydown="handleKey(event)"></textarea>
+        <button class="mic-btn" id="micBtn" onclick="toggleMic()" aria-label="Voice Input">🎤</button>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send">➤</button>
+      </div>
+      <div class="input-footer">
+        Press Enter to send · Shift+Enter for new line · 🎤 for voice
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Admin Modals (Jinja Includes) -->
+{% include 'admin_students.html' %}
+{% include 'admin_esp32_status.html' %}
+{% include 'admin_esp32_wifi.html' %}
+
+<!-- AUDIO PLAYER -->
+<audio id="audioPlayer" style="display: none;"></audio>
+
+<script src="/static/js/studybuddy.js"></script>
+<script>
+  const USERNAME = "{{ username }}";
+  let currentTopic = "";
+  
+  // Initialize
+  document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('avatarEl').textContent = "{{ name }}"[0].toUpperCase();
+    
+    // Auto resize textarea
+    const tx = document.getElementById('msgInput');
+    tx.setAttribute('style', 'height:' + (tx.scrollHeight) + 'px;overflow-y:hidden;');
+    tx.addEventListener("input", OnInput, false);
+    function OnInput() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    }
+    
+    // Check Admin
+    try {
+      const me = await apiFetch('/api/me');
+      if (me.role === 'admin') {
+        document.getElementById('adminMenu').style.display = 'block';
+        document.getElementById('roleEl').textContent = 'Admin';
+        document.getElementById('roleEl').style.color = 'var(--accent-start)';
+      }
+    } catch(e) {}
+  });
+
+  // Modals
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  // Sidebar Logic
+  function setTopic(btn, topic) {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTopic = topic;
+    document.getElementById('topbarTitle').textContent = topic ? topic : 'General Chat';
+    if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+  }
+
+  function newChat() {
+    document.getElementById('chatBox').innerHTML = document.getElementById('welcomeState').outerHTML;
+    document.getElementById('welcomeState').style.display = 'flex';
+    // Clear backend history
+    apiFetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: '__clear_history__', audio: false}) }).catch(()=>{});
+  }
+
+  // Chat Logic
+  function checkInput() {
+    const val = document.getElementById('msgInput').value.trim();
+    const btn = document.getElementById('sendBtn');
+    if (val) btn.classList.add('active');
+    else btn.classList.remove('active');
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function sendText(text) {
+    document.getElementById('msgInput').value = text;
+    checkInput();
+    sendMessage();
+  }
+
+  function appendMsg(role, text) {
+    const box = document.getElementById('chatBox');
+    const ws = document.getElementById('welcomeState');
+    if (ws) ws.style.display = 'none';
+
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    
+    const avatarContent = role === 'user' ? "{{ name }}"[0].toUpperCase() : '✨';
+    
+    // Basic Markdown formatting for code blocks
+    let formattedText = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    
+    div.innerHTML = `
+      <div class="msg-avatar">${avatarContent}</div>
+      <div class="msg-bubble">${formattedText}</div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
+
+  function appendTyping() {
+    const box = document.getElementById('chatBox');
+    const div = document.createElement('div');
+    div.className = `message ai`;
+    div.innerHTML = `
+      <div class="msg-avatar">✨</div>
+      <div class="msg-bubble skeleton" style="width: 60px; height: 24px; border-radius: 12px;"></div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('msgInput');
+    let text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+    checkInput();
+
+    let sendText = currentTopic ? `[Subject: ${currentTopic}] ${text}` : text;
+    
+    appendMsg('user', text);
+    const typingEl = appendTyping();
+
+    try {
+      const res = await apiFetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: sendText, audio: true })
+      });
+      
+      typingEl.remove();
+      appendMsg('ai', res.text);
+      
+      if (res.audio_url) {
+        const audio = document.getElementById('audioPlayer');
+        audio.src = res.audio_url;
+        audio.play().catch(e => console.log("Audio autoplay blocked", e));
+      }
+    } catch (e) {
+      typingEl.remove();
+      appendMsg('ai', `⚠️ Error: ${e.message}`);
+    }
+  }
+
+  // Voice Logic
+  let isRecording = false;
+  let mediaRecorder, audioChunks = [];
+
+  async function toggleMic() {
+    const micBtn = document.getElementById('micBtn');
+    
+    if (isRecording) {
+      mediaRecorder.stop();
+      micBtn.classList.remove('recording');
+      isRecording = false;
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, { type: 'audio/wav' });
+        // Clean up stream
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Use STT endpoint
+        const formData = new FormData();
+        formData.append('audio', blob, 'recording.wav');
+        
+        try {
+          // Since /api/stt expects raw body, let's just send the blob
+          const res = await apiFetch('/api/stt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'audio/wav' },
+            body: blob
+          });
+          if (res.text) {
+            document.getElementById('msgInput').value = res.text;
+            checkInput();
+          } else if (res.error) {
+            showToast(res.error, 'warning');
+          }
+        } catch (e) { }
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      micBtn.classList.add('recording');
+    } catch (err) {
+      console.error(err);
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        showToast('Microphone access requires HTTPS connection.', 'error');
+      } else {
+        showToast('Microphone access denied.', 'error');
+      }
+    }
+  }
+</script>
+
+</body>
+</html>

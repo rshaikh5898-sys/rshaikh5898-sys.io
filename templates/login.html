@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - StudyBuddy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/studybuddy.css">
+<style>
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(circle at top right, rgba(108, 99, 255, 0.15), transparent 40%),
+                radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.15), transparent 40%),
+                var(--bg);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+  }
+
+  /* Animated background particles effect */
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(to right, var(--border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%);
+    z-index: -1;
+    opacity: 0.5;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 48px 40px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  @keyframes slideUpFade {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-container {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .logo-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: inline-block;
+    filter: drop-shadow(0 0 15px rgba(108, 99, 255, 0.4));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+  }
+
+  .input-group {
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .input-group label {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 15px;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    background: var(--surface2);
+    padding: 0 4px;
+    border-radius: 4px;
+  }
+
+  .input-group input:focus ~ label,
+  .input-group input:not(:placeholder-shown) ~ label {
+    top: 0;
+    font-size: 12px;
+    color: var(--accent-mid);
+    background: var(--surface);
+  }
+
+  .input-group input {
+    height: 56px;
+    background: var(--surface2);
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+  }
+
+  .password-toggle:hover {
+    color: var(--text-primary);
+  }
+
+  .submit-btn {
+    width: 100%;
+    height: 52px;
+    font-size: 16px;
+    margin-top: 8px;
+  }
+
+  .badge {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+  }
+
+  .error-box {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--error);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+
+  @keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<div class="glass login-card">
+  <div class="logo-container">
+    <div class="logo-icon">🎓✨</div>
+    <h1>StudyBuddy</h1>
+    <div class="subtitle">Your AI Study Companion</div>
+  </div>
+
+  {% if error %}
+  <div class="error-box">
+    <span>⚠️</span> {{ error }}
+  </div>
+  {% endif %}
+
+  <div id="jsError" class="error-box" style="display: none;"></div>
+
+  <form id="loginForm" onsubmit="handleLogin(event)">
+    <div class="input-group">
+      <input type="text" id="username" placeholder=" " required autocomplete="username">
+      <label for="username">Username</label>
+    </div>
+
+    <div class="input-group">
+      <input type="password" id="password" placeholder=" " required autocomplete="current-password">
+      <label for="password">Password</label>
+      <button type="button" class="password-toggle" onclick="togglePassword()" tabindex="-1">👁️</button>
+    </div>
+
+    <button type="submit" class="btn-primary submit-btn" id="loginBtn">Sign In</button>
+  </form>
+</div>
+
+<div class="badge">
+  <span style="color: var(--accent-mid);">⚡</span> Powered by LLaMA 3.1
+</div>
+
+<script src="/static/js/studybuddy.js"></script>
+<script>
+  function togglePassword() {
+    const input = document.getElementById('password');
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    const errBox = document.getElementById('jsError');
+    const u = document.getElementById('username').value;
+    const p = document.getElementById('password').value;
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    errBox.style.display = 'none';
+
+    try {
+      const res = await apiFetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      
+      if (res.success) {
+        window.location.href = '/';
+      } else {
+        throw new Error(res.error || 'Invalid credentials');
+      }
+    } catch (err) {
+      errBox.innerHTML = `<span>⚠️</span> ${err.message}`;
+      errBox.style.display = 'flex';
+      // Trigger reflow to restart shake animation
+      errBox.style.animation = 'none';
+      errBox.offsetHeight; 
+      errBox.style.animation = null;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  }
+</script>
+
+</body>
+</html>

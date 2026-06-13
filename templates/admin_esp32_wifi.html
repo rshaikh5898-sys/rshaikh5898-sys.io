@@ -1,0 +1,286 @@
+<!-- ADMIN: ESP32 BLE WIFI SETTINGS -->
+<div id="adminWifiModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 600px; width: 90%;">
+    <div class="modal-header">
+      <h3>📶 ESP32 Web Bluetooth Setup</h3>
+      <button class="modal-close" onclick="closeModal('adminWifiModal'); stopPollingDevices();">×</button>
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      <!-- SECTION 1: FIND & CONNECT -->
+      <div class="glass" style="padding: 24px; border-radius: var(--radius-md);">
+        <h4 style="margin-bottom: 16px; color: var(--text-primary);">1. Provision New Device</h4>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
+          Use Web Bluetooth to scan for a nearby ESP32 and send WiFi credentials directly.
+        </p>
+        
+        <button id="bleScanBtn" class="btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;" onclick="scanForESP32()">
+          <span>🔍</span> Scan for ESP32 Devices
+        </button>
+
+        <div id="bleStatus" style="margin-top: 16px; font-size: 13px; color: var(--text-secondary); text-align: center; display: none;"></div>
+
+        <!-- WiFi Credentials Form (Hidden until connected) -->
+        <div id="bleWifiForm" style="display: none; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Network Name (SSID)</label>
+            <div style="position: relative;">
+              <span style="position: absolute; left: 14px; top: 12px; filter: grayscale(100%);">📶</span>
+              <input type="text" id="bleWifiSsid" placeholder="e.g. MyHomeNetwork" style="padding-left: 40px; width: 100%;">
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Password</label>
+            <div style="position: relative;">
+              <span style="position: absolute; left: 14px; top: 12px; filter: grayscale(100%);">🔒</span>
+              <input type="password" id="bleWifiPass" placeholder="WiFi Password" style="padding-left: 40px; padding-right: 40px; width: 100%;">
+              <button style="position: absolute; right: 8px; top: 8px; background: transparent; border: none; padding: 4px; color: var(--text-secondary); cursor: pointer;" onclick="toggleBleWifiPass()">👁️</button>
+            </div>
+          </div>
+          
+          <button id="bleSendBtn" class="btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;" onclick="sendCredentialsViaBLE()">
+            <span>🚀</span> Send to ESP32
+          </button>
+        </div>
+      </div>
+      
+      <!-- SECTION 2: CONNECTED DEVICES -->
+      <div class="glass" style="padding: 24px; border-radius: var(--radius-md);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h4 style="color: var(--text-primary); margin: 0;">2. Connected Devices</h4>
+          <span style="font-size: 12px; color: var(--text-secondary);">Auto-refreshes every 30s</span>
+        </div>
+        
+        <div id="connectedDevicesList" style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="text-align: center; color: var(--text-secondary); font-size: 14px; padding: 20px;">Loading devices...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// BLE UUIDs from prompt
+const BLE_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const BLE_RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"; // Browser writes to ESP32 RX
+const BLE_TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"; // Browser reads/notifies from ESP32 TX
+
+let bleDevice = null;
+let bleServer = null;
+let bleService = null;
+let bleRxChar = null;
+let bleTxChar = null;
+let pollingInterval = null;
+
+function toggleBleWifiPass() {
+  const input = document.getElementById('bleWifiPass');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function updateBleStatus(text, type = 'info') {
+  const statusDiv = document.getElementById('bleStatus');
+  statusDiv.style.display = 'block';
+  statusDiv.textContent = text;
+  if(type === 'error') statusDiv.style.color = 'var(--error)';
+  else if(type === 'success') statusDiv.style.color = 'var(--success)';
+  else statusDiv.style.color = 'var(--text-secondary)';
+}
+
+async function scanForESP32() {
+  if (!navigator.bluetooth) {
+    showToast('⚠️ Please use Chrome or Edge browser for device scanning', 'warning');
+    updateBleStatus('Web Bluetooth API is not supported in this browser.', 'error');
+    return;
+  }
+
+  try {
+    updateBleStatus('⏳ Scanning for StudyBuddy-ESP32...');
+    
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ name: 'StudyBuddy-ESP32' }],
+      optionalServices: [BLE_SERVICE_UUID]
+    });
+
+    bleDevice.addEventListener('gattserverdisconnected', () => {
+      updateBleStatus('❌ Device disconnected.', 'error');
+      document.getElementById('bleWifiForm').style.display = 'none';
+      document.getElementById('bleScanBtn').style.display = 'flex';
+    });
+
+    updateBleStatus(`⏳ Connecting to ${bleDevice.name}...`);
+    bleServer = await bleDevice.gatt.connect();
+    
+    updateBleStatus('⏳ Getting BLE Service...');
+    bleService = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
+    
+    updateBleStatus('⏳ Getting Characteristics...');
+    bleRxChar = await bleService.getCharacteristic(BLE_RX_UUID);
+    bleTxChar = await bleService.getCharacteristic(BLE_TX_UUID);
+
+    // Start listening for notifications from ESP32
+    await bleTxChar.startNotifications();
+    bleTxChar.addEventListener('characteristicvaluechanged', handleBleNotification);
+
+    updateBleStatus('✅ Connected to ESP32! Ready for credentials.', 'success');
+    document.getElementById('bleScanBtn').style.display = 'none';
+    document.getElementById('bleWifiForm').style.display = 'block';
+
+  } catch (error) {
+    console.error(error);
+    if(error.name === 'NotFoundError') {
+      updateBleStatus('Scan cancelled or no device selected.', 'info');
+    } else {
+      updateBleStatus(`❌ Error: ${error.message}`, 'error');
+      showToast(`BLE Error: ${error.message}`, 'error');
+    }
+  }
+}
+
+function handleBleNotification(event) {
+  const value = event.target.value;
+  const decoder = new TextDecoder('utf-8');
+  const msg = decoder.decode(value);
+  
+  try {
+    const data = JSON.parse(msg);
+    if (data.status === 'connecting') {
+      updateBleStatus('⏳ ESP32 is connecting to WiFi...');
+      document.getElementById('bleSendBtn').disabled = true;
+      document.getElementById('bleSendBtn').innerHTML = '⏳ Connecting...';
+    } else if (data.status === 'connected') {
+      updateBleStatus(`✅ Connected! IP: ${data.ip}`, 'success');
+      showToast(`ESP32 Connected to WiFi! IP: ${data.ip}`, 'success');
+      document.getElementById('bleWifiForm').style.display = 'none';
+      document.getElementById('bleScanBtn').style.display = 'flex';
+      document.getElementById('bleScanBtn').innerHTML = '<span>➕</span> Provision Another Device';
+      
+      // Auto refresh the devices list
+      loadConnectedDevices();
+      
+      // Disconnect BLE so ESP32 can continue
+      if(bleDevice && bleDevice.gatt.connected) {
+        bleDevice.gatt.disconnect();
+      }
+    } else if (data.status === 'failed') {
+      updateBleStatus('❌ Failed — check WiFi details and try again', 'error');
+      document.getElementById('bleSendBtn').disabled = false;
+      document.getElementById('bleSendBtn').innerHTML = '<span>🚀</span> Send to ESP32';
+    }
+  } catch(e) {
+    console.error("Failed to parse BLE notification:", msg);
+  }
+}
+
+async function sendCredentialsViaBLE() {
+  const ssid = document.getElementById('bleWifiSsid').value.trim();
+  const password = document.getElementById('bleWifiPass').value;
+  
+  if (!ssid) {
+    showToast('Please enter a Network Name (SSID)', 'warning');
+    return;
+  }
+  
+  if (!bleRxChar) {
+    showToast('BLE not connected properly. Please scan again.', 'error');
+    return;
+  }
+
+  const payload = JSON.stringify({ ssid, password });
+  const encoder = new TextEncoder();
+  const data = encoder.encode(payload);
+
+  try {
+    updateBleStatus('⏳ Sending credentials via Bluetooth...');
+    await bleRxChar.writeValue(data);
+    updateBleStatus('⏳ Credentials sent! Waiting for ESP32...');
+  } catch(error) {
+    console.error(error);
+    updateBleStatus(`❌ Failed to send: ${error.message}`, 'error');
+    showToast(`BLE Write Error: ${error.message}`, 'error');
+  }
+}
+
+// SECTION 2: Connected Devices Polling
+async function loadConnectedDevices() {
+  const container = document.getElementById('connectedDevicesList');
+  try {
+    const devices = await apiFetch('/api/esp32/devices');
+    container.innerHTML = '';
+    
+    const deviceIds = Object.keys(devices);
+    if (deviceIds.length === 0) {
+      container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); font-size: 14px; padding: 20px;">No devices registered yet.</div>';
+      return;
+    }
+    
+    deviceIds.forEach(id => {
+      const dev = devices[id];
+      const isOnline = dev.status === 'online';
+      const color = isOnline ? 'var(--success)' : 'var(--text-secondary)';
+      const dot = isOnline ? '🟢' : '⚪';
+      
+      const card = document.createElement('div');
+      card.style.background = 'rgba(255, 255, 255, 0.03)';
+      card.style.border = '1px solid var(--border)';
+      card.style.borderRadius = 'var(--radius-sm)';
+      card.style.padding = '16px';
+      
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+          <div style="font-weight: 600; color: ${color}; font-size: 15px;">${dot} ${id}</div>
+          <button class="btn-secondary" style="padding: 4px 12px; font-size: 12px; color: var(--error); border-color: rgba(248,81,73,0.3);" onclick="disconnectESP32('${id}')">
+            Disconnect
+          </button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: var(--text-secondary);">
+          <div>IP: <span style="color: var(--text-primary);">${dev.ip || 'Unknown'}</span></div>
+          <div>WiFi: <span style="color: var(--text-primary);">${dev.ssid || 'Unknown'}</span></div>
+          <div>Signal: <span style="color: var(--text-primary);">${dev.signal || 0} dBm</span></div>
+          <div>Status: <span style="color: ${color};">${isOnline ? 'Online' : 'Offline'}</span></div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+    
+  } catch (e) {
+    container.innerHTML = '<div style="text-align: center; color: var(--error); font-size: 14px; padding: 20px;">Failed to load devices</div>';
+  }
+}
+
+async function disconnectESP32(deviceId) {
+  if(!confirm(`Are you sure you want to disconnect ${deviceId}? It will forget its WiFi and reboot into BLE mode.`)) return;
+  
+  try {
+    const res = await apiFetch(`/api/esp32/disconnect/${deviceId}`, { method: 'POST' });
+    if (res.success) {
+      showToast(`Disconnect command sent to ${deviceId}!`, 'success');
+      loadConnectedDevices();
+    }
+  } catch(e) {
+    showToast('Failed to send disconnect command', 'error');
+  }
+}
+
+function startPollingDevices() {
+  loadConnectedDevices();
+  if(pollingInterval) clearInterval(pollingInterval);
+  pollingInterval = setInterval(loadConnectedDevices, 30000); // 30 seconds
+}
+
+function stopPollingDevices() {
+  if(pollingInterval) clearInterval(pollingInterval);
+}
+
+// Override modal open to start polling
+const originalOpenModal = window.openModal;
+if(typeof originalOpenModal === 'function' && !window.bleModalPatched) {
+  window.bleModalPatched = true;
+  window.openModal = function(id) {
+    originalOpenModal(id);
+    if(id === 'adminWifiModal') {
+      startPollingDevices();
+    }
+  }
+}
+</script>

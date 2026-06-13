@@ -1,0 +1,99 @@
+<!-- ADMIN: MANAGE STUDENTS -->
+<div id="adminStudentsModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3>👥 Manage Students</h3>
+      <button class="modal-close" onclick="closeModal('adminStudentsModal')">×</button>
+    </div>
+    
+    <!-- Add User Form -->
+    <div class="glass" style="padding: 16px; margin-bottom: 20px; border-radius: var(--radius-md);">
+      <h4 style="margin-bottom: 12px; color: var(--text-secondary); font-size: 14px;">Add New Student</h4>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <input type="text" id="newUsername" placeholder="Username">
+        <input type="text" id="newName" placeholder="Full Name">
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <input type="password" id="newPassword" placeholder="Password" style="flex: 1;">
+        <button class="btn-primary" onclick="addUser()">Add Student</button>
+      </div>
+    </div>
+
+    <!-- Student List -->
+    <div style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+      <div id="userList" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Loaded via JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadUserList() {
+  try {
+    const data = await apiFetch('/api/admin/users');
+    const list = document.getElementById('userList');
+    list.innerHTML = '';
+    
+    if (data.length === 0) {
+      list.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No students found.</div>';
+      return;
+    }
+
+    data.forEach(u => {
+      const isSelf = u.username === USERNAME;
+      const roleColor = u.role === 'admin' ? 'var(--accent-start)' : 'var(--accent-mid)';
+      
+      list.innerHTML += `
+        <div class="glass" style="display: flex; align-items: center; padding: 12px 16px; border-radius: var(--radius-sm); gap: 16px;">
+          <div style="width: 36px; height: 36px; border-radius: var(--radius-full); background: ${roleColor}; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+            ${u.name[0].toUpperCase()}
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600;">${u.name} ${isSelf ? '(You)' : ''}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">@${u.username} • <span style="color: ${roleColor};">${u.role}</span></div>
+          </div>
+          ${u.username !== 'admin' ? `<button class="btn-secondary" style="padding: 6px 12px; font-size: 12px; color: var(--error); border-color: rgba(239, 68, 68, 0.2);" onclick="deleteUser('${u.username}')">Remove</button>` : ''}
+        </div>`;
+    });
+  } catch (e) {
+    // Error handled by apiFetch
+  }
+}
+
+async function addUser() {
+  const username = document.getElementById('newUsername').value.trim();
+  const name     = document.getElementById('newName').value.trim();
+  const password = document.getElementById('newPassword').value;
+  
+  if (!username || !name || !password) { 
+    showToast('Please fill all fields', 'warning'); 
+    return; 
+  }
+  
+  try {
+    const data = await apiFetch('/api/admin/users', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, name, password, role: 'student' })
+    });
+    
+    if (data.success) {
+      document.getElementById('newUsername').value = '';
+      document.getElementById('newName').value = '';
+      document.getElementById('newPassword').value = '';
+      showToast('Student added successfully!', 'success');
+      await loadUserList();
+    }
+  } catch(e) { }
+}
+
+async function deleteUser(username) {
+  if (!confirm(`Are you sure you want to remove @${username}?`)) return;
+  try {
+    await apiFetch(`/api/admin/users/${username}`, { method: 'DELETE' });
+    showToast(`User @${username} removed`, 'success');
+    await loadUserList();
+  } catch(e) { }
+}
+</script>

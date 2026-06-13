@@ -1,0 +1,76 @@
+<!-- ADMIN: ESP32 STATUS -->
+<div id="adminDeviceModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 700px;">
+    <div class="modal-header">
+      <h3>📡 ESP32 Devices Status</h3>
+      <button class="modal-close" onclick="closeModal('adminDeviceModal')">×</button>
+    </div>
+    
+    <div id="deviceList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; max-height: 500px; overflow-y: auto; padding-right: 8px;">
+      <!-- Loaded via JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadDeviceList() {
+  const list = document.getElementById('deviceList');
+  list.innerHTML = `
+    <div style="grid-column: 1 / -1; display: flex; justify-content: center; padding: 40px;">
+      <div class="skeleton" style="width: 100%; height: 100px; border-radius: var(--radius-md);"></div>
+    </div>`;
+    
+  try {
+    const data = await apiFetch('/api/admin/devices');
+    list.innerHTML = '';
+    
+    if (data.length === 0) {
+      list.innerHTML = '<div style="grid-column: 1 / -1; text-align:center; padding: 40px; color: var(--text-secondary);">No ESP32 devices registered yet.</div>';
+      return;
+    }
+
+    data.forEach(d => {
+      const isOnline = d.status === 'online';
+      const statusColor = isOnline ? 'var(--success)' : 'var(--text-secondary)';
+      const statusText = isOnline ? 'Online' : 'Offline';
+      
+      let timeText = 'Never seen';
+      if (d.last_seen_ago >= 0) {
+        if (d.last_seen_ago < 60) timeText = `Seen ${d.last_seen_ago}s ago`;
+        else if (d.last_seen_ago < 3600) timeText = `Seen ${Math.floor(d.last_seen_ago/60)}m ago`;
+        else timeText = `Seen ${Math.floor(d.last_seen_ago/3600)}h ago`;
+      }
+      
+      list.innerHTML += `
+        <div class="glass" style="padding: 16px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${statusColor};"></div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-weight: 600; font-size: 16px;">${d.name}'s Device</div>
+              <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">User: @${d.username}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; background: var(--surface2); padding: 4px 8px; border-radius: var(--radius-full); font-size: 12px;">
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; ${isOnline ? 'box-shadow: 0 0 8px ' + statusColor + ';' : ''}"></div>
+              ${statusText}
+            </div>
+          </div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span>⏱️</span> ${timeText}
+            </div>
+            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="pingDevice('${d.username}')">Ping Device</button>
+          </div>
+        </div>`;
+    });
+  } catch(e) {
+    list.innerHTML = '<div style="grid-column: 1 / -1; text-align:center; padding: 40px; color: var(--error);">Failed to load devices</div>';
+  }
+}
+
+function pingDevice(username) {
+  showToast(`Ping sent to ${username}'s device!`, 'info');
+  // Placeholder for future ping API implementation
+}
+</script>

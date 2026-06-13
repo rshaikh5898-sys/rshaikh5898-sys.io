@@ -1,0 +1,10 @@
+{
+  "ESP32-001": {
+    "ip": "192.168.1.12",
+    "ssid": "Airtel_NubeEra-01",
+    "status": "online",
+    "signal": -54,
+    "last_seen": 1781312221.071013,
+    "connected": true
+  }
+}

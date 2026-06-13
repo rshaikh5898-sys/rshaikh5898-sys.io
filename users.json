@@ -1,0 +1,13 @@
+{
+  "admin": {
+    "password": "scrypt:32768:8:1$8KuWlnTWTsDqx980$7f6640383d8ddfb578b50d39644d3e3a89338027211b2380b3df44c3b96219031b1673375f8e0f648f6e4977487c788aff2df1acf5bf43c09cc0815fb0e69b88",
+    "name": "Admin",
+    "role": "admin"
+  },
+  "student1": {
+    "password": "scrypt:32768:8:1$rA2ewP8ALUrlxjMf$e101063c9ba33f89cb997c7b81fafdf81914fb0a20bd49f75487db7b7f67868dac488cdc72b9b1aebf54e13c8d082e4f83ba69c8995d7ed71d8a86b8fbb3da22",
+    "name": "Rehan",
+    "role": "student",
+    "device_token": "37533d990ce54190b3251352aa680421"
+  }
+}

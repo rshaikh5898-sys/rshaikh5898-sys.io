@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyBuddy — WiFi Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --accent: #58a6ff; --accent2: #3fb950; --text: #e6edf3;
+    --muted: #8b949e; --error: #f85149; --radius: 14px;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', sans-serif; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, #ffffff08 1px, transparent 0);
+    background-size: 32px 32px; pointer-events: none;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 460px;
+    box-shadow: 0 0 60px #58a6ff18; position: relative;
+  }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--muted); font-size: 13px; text-decoration: none;
+    margin-bottom: 28px; transition: color 0.2s;
+  }
+  .back-btn:hover { color: var(--text); }
+  .logo {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
+  }
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px;
+  }
+  .logo-text { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 700; }
+  .logo-text span { color: var(--accent); }
+  h2 { font-family: 'Sora', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 32px; line-height: 1.5; }
+
+  /* Status banner */
+  .status-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: #58a6ff0d; border: 1px solid #58a6ff22;
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 28px;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.connected { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .status-dot.none { background: var(--muted); }
+  .status-dot.pending { background: #e3b341; box-shadow: 0 0 8px #e3b341; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .status-text { font-size: 13px; }
+  .status-text strong { display: block; font-size: 14px; color: var(--text); }
+
+  label {
+    display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+    margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 13px 16px; font-size: 15px;
+    color: var(--text); font-family: 'Inter', sans-serif; outline: none;
+    transition: border-color 0.2s; margin-bottom: 20px;
+  }
+  input:focus { border-color: var(--accent); }
+
+  .input-wrapper { position: relative; margin-bottom: 20px; }
+  .input-wrapper input { margin-bottom: 0; padding-right: 48px; }
+  .toggle-pw {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 16px; padding: 4px;
+  }
+
+  .btn {
+    width: 100%; background: linear-gradient(135deg, var(--accent), #1f6feb);
+    color: #fff; border: none; border-radius: var(--radius);
+    padding: 14px; font-size: 15px; font-weight: 600;
+    font-family: 'Sora', sans-serif; cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s; margin-top: 4px;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .msg {
+    border-radius: 10px; padding: 12px 16px; font-size: 13px;
+    margin-top: 16px; display: none; line-height: 1.5;
+  }
+  .msg.success {
+    background: #3fb95018; border: 1px solid #3fb95040; color: var(--accent2);
+  }
+  .msg.error {
+    background: #f8514918; border: 1px solid #f8514940; color: var(--error);
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  .info-box {
+    background: #e3b34110; border: 1px solid #e3b34130;
+    border-radius: 12px; padding: 14px 16px; font-size: 13px;
+    color: #e3b341; line-height: 1.6;
+  }
+  .info-box strong { display: block; margin-bottom: 4px; font-size: 14px; }
+  .steps { margin-top: 8px; padding-left: 16px; }
+  .steps li { margin-bottom: 4px; color: var(--muted); }
+  .steps li strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="card">
+  <a href="/" class="back-btn">← Back to StudyBuddy</a>
+
+  <div class="logo">
+    <div class="logo-icon">📶</div>
+    <div class="logo-text">Study<span>Buddy</span></div>
+  </div>
+
+  <h2>WiFi Settings</h2>
+  <p class="subtitle">Change the WiFi network your ESP32 device connects to. The new credentials will be sent to the device automatically.</p>
+
+  <!-- Current status -->
+  <div class="status-banner">
+    <div class="status-dot" id="statusDot"></div>
+    <div class="status-text">
+      <strong id="statusTitle">Loading...</strong>
+      <span id="statusDesc"></span>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <label for="ssid">New WiFi Name (SSID)</label>
+  <input type="text" id="ssid" placeholder="e.g. Airtel_NubeEra-01" autocomplete="off"/>
+
+  <label for="password">WiFi Password</label>
+  <div class="input-wrapper">
+    <input type="password" id="password" placeholder="Your WiFi password"/>
+    <button class="toggle-pw" onclick="togglePw()" title="Show/hide password">👁</button>
+  </div>
+
+  <button class="btn" id="saveBtn" onclick="saveWifi()">Send to ESP32 Device</button>
+
+  <div class="msg success" id="successMsg"></div>
+  <div class="msg error"   id="errorMsg"></div>
+
+  <hr class="divider"/>
+
+  <div class="info-box">
+    <strong>⚡ How this works</strong>
+    <ol class="steps">
+      <li>Enter your <strong>new WiFi name and password</strong> above</li>
+      <li>Click <strong>Send to ESP32 Device</strong></li>
+      <li>The credentials are saved on the server</li>
+      <li>Next time the ESP32 <strong>checks in</strong> (every 30 seconds), it gets the new WiFi details</li>
+      <li>ESP32 automatically <strong>disconnects and reconnects</strong> to the new WiFi ✅</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+async function loadStatus() {
+  try {
+    const res  = await fetch('/api/wifi/status');
+    const data = await res.json();
+    const dot  = document.getElementById('statusDot');
+    const title = document.getElementById('statusTitle');
+    const desc  = document.getElementById('statusDesc');
+
+    if (data.pending) {
+      dot.className   = 'status-dot pending';
+      title.textContent = 'Pending — waiting for ESP32';
+      desc.textContent  = `New WiFi "${data.ssid}" saved. ESP32 will connect soon.`;
+      // Pre-fill the form with pending SSID
+      document.getElementById('ssid').value = data.ssid;
+    } else if (data.ssid) {
+      dot.className   = 'status-dot connected';
+      title.textContent = 'WiFi configured: ' + data.ssid;
+      desc.textContent  = 'ESP32 has received the credentials.';
+      document.getElementById('ssid').value = data.ssid;
+    } else {
+      dot.className   = 'status-dot none';
+      title.textContent = 'No WiFi configured yet';
+      desc.textContent  = 'Enter credentials below to set up the ESP32.';
+    }
+  } catch(e) {
+    console.error('Status load error:', e);
+  }
+}
+
+async function saveWifi() {
+  const ssid     = document.getElementById('ssid').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('saveBtn');
+  const successEl = document.getElementById('successMsg');
+  const errorEl   = document.getElementById('errorMsg');
+
+  successEl.style.display = 'none';
+  errorEl.style.display   = 'none';
+
+  if (!ssid) { showError('Please enter a WiFi name.'); return; }
+
+  btn.disabled    = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res  = await fetch('/api/wifi/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ssid, password })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      successEl.textContent = '✅ ' + data.message;
+      successEl.style.display = 'block';
+      document.getElementById('password').value = '';
+      await loadStatus();   // Refresh status banner
+    } else {
+      showError(data.error || 'Something went wrong.');
+    }
+  } catch(e) {
+    showError('Could not reach server. Is it running?');
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'Send to ESP32 Device';
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent     = '❌ ' + msg;
+  el.style.display   = 'block';
+}
+
+function togglePw() {
+  const input = document.getElementById('password');
+  input.type  = input.type === 'password' ? 'text' : 'password';
+}
+
+// Load status on page load and refresh every 5 seconds
+loadStatus();
+setInterval(loadStatus, 5000);
+</script>
+</body>
+</html>
